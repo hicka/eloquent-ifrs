@@ -98,6 +98,7 @@ class AccountStatement
      * @param string $endDate
      */
     public function __construct(
+        $entity_id,
         int $accountId = null,
         int $currencyId = null,
         string $startDate = null,
@@ -109,9 +110,9 @@ class AccountStatement
             $this->account = Account::find($accountId);
         }
 
-        $this->entity = Auth::user()->entity;
+        $this->entity = Entity::where('id','=',$entity_id)->first();
 
-        $this->period['startDate'] = is_null($startDate) ? ReportingPeriod::periodStart() : Carbon::parse($startDate);
+        $this->period['startDate'] = is_null($startDate) ? ReportingPeriod::periodStart($entity_id) : Carbon::parse($startDate);
         $this->period['endDate'] = is_null($endDate) ? Carbon::now() : Carbon::parse($endDate);
         $this->currency = is_null($currencyId) ? $this->entity->currency : Currency::find($currencyId);
         $this->currencyId = $currencyId;

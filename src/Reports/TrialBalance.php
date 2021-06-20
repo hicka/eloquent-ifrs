@@ -28,14 +28,14 @@ class TrialBalance extends FinancialStatement
      *
      * @param string $year
      */
-    public function __construct(string $year = null)
+    public function __construct($entity_id,string $year = null)
     {
         $startDate = $year."-01-01";
-        $period = ReportingPeriod::getPeriod(Carbon::parse($startDate));
+        $period = ReportingPeriod::getPeriod($entity_id,Carbon::parse($startDate));
         
-        parent::__construct($period);
+        parent::__construct($entity_id,$period);
         
-        $this->endDate = ReportingPeriod::periodEnd($startDate);
+        $this->endDate = ReportingPeriod::periodEnd($entity_id,$startDate);
 
         $this->accounts[IncomeStatement::TITLE] = [];
         $this->accounts[BalanceSheet::TITLE] = [];
@@ -47,9 +47,9 @@ class TrialBalance extends FinancialStatement
     /**
      * Get Trial Balance Sections.
      */
-    public function getSections($startDate = null, $endDate = null, $fullbalance = true): array
+    public function getSections($entity_id,$startDate = null, $endDate = null, $fullbalance = true): array
     {
-        foreach (Account::all() as $account) {
+        foreach (Account::where('entity_id','=',$entity_id)->get() as $account) {
             $balance = $account->closingBalance($this->endDate);
             
             if ($balance <> 0) {

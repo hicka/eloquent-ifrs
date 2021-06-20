@@ -76,6 +76,9 @@ class Ledger extends Model implements Segregatable
             $folio->entry_type = Balance::CREDIT;
         }
 
+        $post->entity_id = $lineItem->entity_id;
+        $folio->entity_id = $lineItem->entity_id;
+
         // identical double entry data
         $post->transaction_id = $folio->transaction_id = $transaction->id;
         $post->currency_id = $folio->currency_id = $transaction->currency_id;
@@ -116,6 +119,10 @@ class Ledger extends Model implements Segregatable
                 $post->entry_type = Balance::DEBIT;
                 $folio->entry_type = Balance::CREDIT;
             }
+
+
+            $post->entity_id = $lineItem->entity_id;
+            $folio->entity_id = $lineItem->entity_id;
 
             // identical double entry data
             $post->transaction_id = $folio->transaction_id = $transaction->id;

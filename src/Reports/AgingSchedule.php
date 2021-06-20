@@ -80,25 +80,25 @@ class AgingSchedule
     }
     /**
      * Agine Schedule for the account type as at the endDate.
-     *
+     * @param int $entity_id
      * @param string $accountType
      * @param int    $currencyId
      * @param string $endDate
      */
-    public function __construct(string $accountType = Account::RECEIVABLE, string $endDate = null, int $currencyId = null)
+    public function __construct($entity_id,string $accountType = Account::RECEIVABLE, string $endDate = null, int $currencyId = null)
     {
         $this->period['endDate'] = is_null($endDate) ? Carbon::now() : Carbon::parse($endDate);
-        $this->entity = Auth::user()->entity;
+        $this->entity = Entity::where('id','=',$entity_id)->first();
         $this->currency = is_null($currencyId) ? $this->entity->currency : Currency::find($currencyId);
 
         $this->brackets = config('ifrs')['aging_schedule_brackets'];
 
         $balances = array_fill_keys(array_keys($this->brackets), 0);
 
-        foreach (Account::where("account_type", $accountType)->get() as $account) {
+        foreach (Account::where("account_type", $accountType)->where('entity_id','=',$entity_id)->get() as $account) {
             $account_balances = array_fill_keys(array_keys($this->brackets), 0);
 
-            $schedule = new AccountSchedule($account->id, $currencyId, $endDate);
+            $schedule = new AccountSchedule($entity_id,$account->id, $currencyId, $endDate);
             $schedule->getTransactions();
 
             foreach ($schedule->transactions as $transaction) {

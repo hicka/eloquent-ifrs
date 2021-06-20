@@ -171,9 +171,9 @@ abstract class FinancialStatement
      *
      * @param ReportingPeriod $period
      */
-    public function __construct(ReportingPeriod $period = null)
+    public function __construct($entity_id,ReportingPeriod $period = null)
     {
-        $this->entity = Auth::user()->entity;
+        $this->entity = Entity::where('id','=',$entity_id)->first();
         $this->reportingPeriod = is_null($period) ? $this->entity->currentReportingPeriod : $period;
 
         $this->statement = "";
@@ -202,11 +202,11 @@ abstract class FinancialStatement
      *
      * Get Statement Sections.
      */
-    public function getSections($startDate = null, $endDate = null, $fullbalance = true): array
+    public function getSections($entity_id,$startDate = null, $endDate = null, $fullbalance = true): array
     {
         foreach (array_keys($this->accounts) as $section) {
             foreach (config('ifrs')[$section] as $accountType) {
-                $sectionBalances = Account::sectionBalances([$accountType], $startDate, $endDate, $fullbalance);
+                $sectionBalances = Account::sectionBalances($entity_id,[$accountType], $startDate, $endDate, $fullbalance);
 
                 if ($sectionBalances["sectionClosingBalance"] <> 0) {
 

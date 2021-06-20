@@ -69,13 +69,13 @@ class BalanceSheet extends FinancialStatement
      *
      * @param string $endDate
      */
-    public function __construct(string $endDate = null)
+    public function __construct($entity_id,string $endDate = null)
     {
-        $this->period['startDate'] = ReportingPeriod::periodStart($endDate);
-        $this->period['endDate'] = is_null($endDate) ? ReportingPeriod::periodEnd() : Carbon::parse($endDate);
+        $this->period['startDate'] = ReportingPeriod::periodStart($entity_id,$endDate);
+        $this->period['endDate'] = is_null($endDate) ? ReportingPeriod::periodEnd($entity_id) : Carbon::parse($endDate);
 
-        $period = ReportingPeriod::getPeriod($this->period['endDate']);
-        parent::__construct($period);
+        $period = ReportingPeriod::getPeriod($entity_id,$this->period['endDate']);
+        parent::__construct($entity_id,$period);
 
         // Section Accounts
         $this->accounts[self::ASSETS] = [];
@@ -113,15 +113,16 @@ class BalanceSheet extends FinancialStatement
     /**
      * Get Balance Sheet Sections.
      */
-    public function getSections($startDate = null, $endDate = null, $fullbalance = true): array
+    public function getSections($entity_id,$startDate = null, $endDate = null, $fullbalance = true): array
     {
-        parent::getSections($this->period['startDate'], $this->period['endDate']);
+        parent::getSections($entity_id,$this->period['startDate'], $this->period['endDate']);
 
         // Net Assets   
         $this->results[self::NET_ASSETS] = $this->totals[self::ASSETS] + ($this->totals[self::LIABILITIES] + $this->totals[self::RECONCILIATION]);
 
         // Net Profit
         $netProfit = Account::sectionBalances(
+            $entity_id,
             IncomeStatement::getAccountTypes(),
             $this->period['startDate'], 
             $this->period['endDate']

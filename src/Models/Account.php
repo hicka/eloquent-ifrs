@@ -175,6 +175,7 @@ class Account extends Model implements Recyclable, Segregatable
      * @return array
      */
     public static function sectionBalances(
+        $entity_id,
         array $accountTypes,
         $startDate = null,
         $endDate = null,
@@ -182,13 +183,13 @@ class Account extends Model implements Recyclable, Segregatable
     ): array {
         $balances = ['sectionOpeningBalance' => 0, 'sectionClosingBalance' => 0, 'sectionMovement' => 0, 'sectionCategories' => []];
 
-        $startDate = is_null($startDate) ? ReportingPeriod::periodStart($endDate) : Carbon::parse($startDate);
+        $startDate = is_null($startDate) ? ReportingPeriod::periodStart($entity_id,$endDate) : Carbon::parse($startDate);
         $endDate = is_null($endDate) ? Carbon::now() : Carbon::parse($endDate);
-        $periodStart = ReportingPeriod::periodStart($endDate);
+        $periodStart = ReportingPeriod::periodStart($entity_id,$endDate);
 
-        $year = ReportingPeriod::year($endDate);
+        $year = ReportingPeriod::year($entity_id,$endDate);
 
-        foreach (Account::whereIn('account_type', $accountTypes)->get() as $account) {
+        foreach (Account::whereIn('account_type', $accountTypes)->where('entity_id','=',$entity_id)->get() as $account) {
 
             $account->openingBalance = $account->openingBalance($year) + $account->currentBalance($periodStart, $startDate);
             $account->balanceMovement = $account->currentBalance($startDate, $endDate);
@@ -296,10 +297,10 @@ class Account extends Model implements Recyclable, Segregatable
      */
     public function openingBalance(int $year = null, int $currencyId = null): float
     {
-        $entity = Auth::user()->entity;
+       $entity = Entity::where('id','=',$this->entity_id)->first();
         
         if (!is_null($year)) {
-            $period = ReportingPeriod::getPeriod($year."-01-01");
+            $period = ReportingPeriod::getPeriod($entity->id,$year."-01-01");
         } else {
             $period = $entity->current_reporting_period;
         }
@@ -316,6 +317,8 @@ class Account extends Model implements Recyclable, Segregatable
 
         $totalBalance = 0;
         foreach ($balances as $each) {
+
+
             $amount = $each->balance; 
             
             if (!is_null($currencyId)) {
@@ -338,7 +341,7 @@ class Account extends Model implements Recyclable, Segregatable
     public function currentBalance(Carbon $startDate = null, Carbon $endDate = null, int $currencyId = null): float
     {
 
-        $startDate = is_null($startDate) ? ReportingPeriod::periodStart($endDate) : $startDate;
+        $startDate = is_null($startDate) ? ReportingPeriod::periodStart($this->entity_id,$endDate) : $startDate;
         $endDate = is_null($endDate) ? Carbon::now() : $endDate;
         return Ledger::balance($this, $startDate, $endDate, $currencyId);
     }
@@ -353,9 +356,9 @@ class Account extends Model implements Recyclable, Segregatable
      */
     public function closingBalance(string $endDate = null, int $currencyId = null): float
     {
-        $endDate = is_null($endDate) ? ReportingPeriod::periodEnd() : Carbon::parse($endDate);
-        $startDate = ReportingPeriod::periodStart($endDate);
-        $year = ReportingPeriod::year($endDate);
+        $endDate = is_null($endDate) ? ReportingPeriod::periodEnd($this->entity_id) : Carbon::parse($endDate);
+        $startDate = ReportingPeriod::periodStart($this->entity_id,$endDate);
+        $year = ReportingPeriod::year($this->entity_id,$endDate);
 
         return $this->openingBalance($year, $currencyId) + $this->currentBalance($startDate, $endDate, $currencyId);
     }
@@ -437,8 +440,8 @@ class Account extends Model implements Recyclable, Segregatable
      */
     public function save(array $options = []): bool
     {
-        if (!isset($this->currency_id) && Auth::user()->entity) {
-            $this->currency_id = Auth::user()->entity->currency_id;
+        if (!isset($this->currency_id)) {
+            $this->currency_id = Entity::where('id','=',$this->entity_id)->first()->currency_id;
         }
 
         if (is_null($this->account_type)) {

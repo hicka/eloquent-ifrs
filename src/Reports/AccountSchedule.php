@@ -80,8 +80,10 @@ class AccountSchedule extends AccountStatement
      * @param int    $currencyId
      * @param string $endDate
      */
-    public function __construct(int $accountId = null, int $currencyId = null, string $endDate = null)
+    public function __construct($entity_id,int $accountId = null, int $currencyId = null, string $endDate = null)
     {
+        $this->entity_id = $entity_id;
+
         if (is_null($accountId)) {
             throw new MissingAccount("Account Schedule");
         }
@@ -91,7 +93,7 @@ class AccountSchedule extends AccountStatement
         if (!in_array(Account::find($accountId)->account_type, $accountTypes)) {
             throw new InvalidAccountType($accountTypes);
         }
-        parent::__construct($accountId, $currencyId, null, $endDate);
+        parent::__construct($entity_id,$accountId, $currencyId, null, $endDate);
     }
 
     /**
@@ -99,7 +101,8 @@ class AccountSchedule extends AccountStatement
      */
     public function getTransactions(): array
     {
-        $periodId = ReportingPeriod::getPeriod($this->period['endDate'])->id;
+
+        $periodId = ReportingPeriod::getPeriod($this->entity_id,$this->period['endDate'])->id;
         $currencyId = $this->currencyId;
 
         // Opening Balances

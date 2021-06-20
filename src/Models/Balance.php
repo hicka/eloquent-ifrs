@@ -98,9 +98,11 @@ class Balance extends Model implements Recyclable, Clearable, Segregatable
     /**
      * Construct new Balance.
      */
+
+
     public function __construct($attributes = [])
     {
-        $entity = Auth::user()->entity;
+        $entity = null;
 
         if (!is_null($entity)) {
             $reportingPeriod = $entity->current_reporting_period;

@@ -117,7 +117,7 @@ class Transaction extends Model implements Segregatable, Recyclable, Clearable, 
      */
     public function __construct($attributes = [])
     {
-        $entity = Auth::user()->entity;
+        $entity = Entity::where('id','=',$this->entity_id)->first();
         $this->table = config('ifrs.table_prefix') . 'transactions';
 
         if (!isset($attributes['exchange_rate_id']) && !is_null($entity)) {
@@ -264,10 +264,10 @@ class Transaction extends Model implements Segregatable, Recyclable, Clearable, 
      *
      * @return string
      */
-    public static function transactionNo(string $type, Carbon $transaction_date = null)
+    public static function transactionNo(int $entity_id,string $type, Carbon $transaction_date = null)
     {
-        $period_count = ReportingPeriod::getPeriod($transaction_date)->period_count;
-        $period_start = ReportingPeriod::periodStart($transaction_date);
+        $period_count = ReportingPeriod::getPeriod($entity_id,$transaction_date)->period_count;
+        $period_start = ReportingPeriod::periodStart($entity_id,$transaction_date);
 
         $next_id =  Transaction::withTrashed()
             ->where("transaction_type", $type)
@@ -607,9 +607,12 @@ class Transaction extends Model implements Segregatable, Recyclable, Clearable, 
      */
     public function save(array $options = []): bool
     {
-        $period = ReportingPeriod::getPeriod(Carbon::parse($this->transaction_date));
 
-        if (ReportingPeriod::periodStart($this->transaction_date)->eq(Carbon::parse($this->transaction_date))) {
+
+
+        $period = ReportingPeriod::getPeriod($this->entity_id,Carbon::parse($this->transaction_date));
+
+        if (ReportingPeriod::periodStart($this->entity_id,$this->transaction_date)->eq(Carbon::parse($this->transaction_date))) {
             throw new InvalidTransactionDate();
         }
 
@@ -631,10 +634,12 @@ class Transaction extends Model implements Segregatable, Recyclable, Clearable, 
 
         if (is_null($this->transaction_no)) {
             $this->transaction_no = Transaction::transactionNo(
+                $this->entity_id,
                 $this->transaction_type,
                 Carbon::parse($this->transaction_date)
             );
         }
+
 
         $save = parent::save();
         $this->saveLineItems();

@@ -73,6 +73,7 @@ class IncomeStatement extends FinancialStatement
      */
     private static function getBalance( array $accountTypes, Carbon $startDate, Carbon $endDate) : float
     {
+
         $accountTable = config('ifrs.table_prefix') . 'accounts';
         $ledgerTable = config('ifrs.table_prefix') . 'ledgers';
 
@@ -136,13 +137,14 @@ class IncomeStatement extends FinancialStatement
      * @param string $startDate
      * @param string $endDate
      */
-    public function __construct(string $startDate = null, string $endDate = null)
+    public function __construct($entity_id,string $startDate = null, string $endDate = null)
     {
-        $this->period['startDate'] = is_null($startDate) ? ReportingPeriod::periodStart() : $startDate;
-        $this->period['endDate'] = is_null($endDate) ? ReportingPeriod::periodEnd() : Carbon::parse($endDate);
+        $this->entity_id = $entity_id;
+        $this->period['startDate'] = is_null($startDate) ? ReportingPeriod::periodStart($entity_id) : $startDate;
+        $this->period['endDate'] = is_null($endDate) ? ReportingPeriod::periodEnd($entity_id) : Carbon::parse($endDate);
 
-        $reportingPeriod = ReportingPeriod::getPeriod($endDate);
-        parent::__construct($reportingPeriod);
+        $reportingPeriod = ReportingPeriod::getPeriod($entity_id,$endDate);
+        parent::__construct($entity_id,$reportingPeriod);
 
         // Section Accounts
         $this->accounts[self::OPERATING_REVENUES] = [];
@@ -181,10 +183,10 @@ class IncomeStatement extends FinancialStatement
     /**
      * Get Cash Flow Statement Sections and Results.
      */
-    public function getSections($startDate = null, $endDate = null, $fullbalance = true): array
+    public function getSections($entity_id,$startDate = null, $endDate = null, $fullbalance = true): array
     {
-        
-        parent::getSections($this->period['startDate'], $this->period['endDate'], false);
+
+        parent::getSections($this->entity_id,$this->period['startDate'], $this->period['endDate'], false);
 
         // Gross Profit
         $this->results[self::GROSS_PROFIT] = ($this->totals[self::OPERATING_REVENUES] + $this->totals[self::OPERATING_EXPENSES]) * -1;
