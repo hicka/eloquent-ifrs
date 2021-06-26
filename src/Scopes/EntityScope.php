@@ -32,4 +32,8 @@ class EntityScope implements Scope
             $builder->where('entity_id', Auth::user()->entity->id);
         }
     }
+
+
+
+
 }

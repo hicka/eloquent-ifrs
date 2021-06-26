@@ -49,6 +49,7 @@ class Currency extends Model implements Recyclable, Segregatable
         'entity_id',
     ];
 
+
     /**
      * Instance Identifier.
      *

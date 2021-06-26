@@ -27,7 +27,7 @@ class CreateIfrsRecycledObjectsTable extends Migration
 
                 // relationships
                 $table->unsignedBigInteger('entity_id');
-                $table->unsignedBigInteger('user_id');
+                $table->unsignedInteger('user_id');
 
                 // constraints
                 $versionString = App::version();

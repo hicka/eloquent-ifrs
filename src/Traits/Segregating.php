@@ -57,4 +57,6 @@ trait Segregating
     {
         return $this->hasOne(Entity::class);
     }
+
+    
 }
